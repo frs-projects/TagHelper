@@ -1,7 +1,29 @@
 pluginManagement {
     repositories {
         gradlePluginPortal()
+        maven {
+            name = 'NeoForged'
+            url = 'https://maven.neoforged.net/releases'
+        }
         mavenCentral()
     }
 }
+
+plugins {
+    // Lets Gradle provision the Java 17 / Java 21 toolchains the targets ask for.
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+}
+
 rootProject.name = 'TagHelper'
+
+apply from: file('gradle/targets.gradle')
+
+// One Gradle subproject per matrix entry. The subprojects have no build files
+// of their own -- they are configured from the root build.gradle -- so all that
+// exists on disk is a build directory.
+gradle.ext.modTargets.each { target ->
+    include target.name
+    def dir = file("versions/${target.name}")
+    dir.mkdirs()
+    project(":${target.name}").projectDir = dir
+}

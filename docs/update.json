@@ -12,6 +12,16 @@
   "1.18.1": {
     "1.0.0": "https://www.curseforge.com/minecraft/mc-mods/taghelper/files/3582760"
   },
+  "1.19.4": {
+    "1.1.0": "Rebuilt on the shared multi-version source tree."
+  },
+  "1.20.1": {
+    "1.0.1": "Slot, hotbar, inventory and ender chest targeting.",
+    "1.1.0": "Rebuilt on the shared multi-version source tree."
+  },
+  "1.21.1": {
+    "1.1.0": "First 1.21.1 release, on NeoForge. Item NBT is now data components: keys are component ids and get dumps the full component map."
+  },
   "promos": {
     "1.15.2-latest": "1.0.0",
     "1.15.2-recommended": "1.0.0",
@@ -20,6 +30,12 @@
     "1.17.1-latest": "1.0.0",
     "1.17.1-recommended": "1.0.0",
     "1.18.1-latest": "1.0.0",
-    "1.18.1-recommended": "1.0.0"
+    "1.18.1-recommended": "1.0.0",
+    "1.19.4-latest": "1.1.0",
+    "1.19.4-recommended": "1.1.0",
+    "1.20.1-latest": "1.1.0",
+    "1.20.1-recommended": "1.1.0",
+    "1.21.1-latest": "1.1.0",
+    "1.21.1-recommended": "1.1.0"
   }
 }

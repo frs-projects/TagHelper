@@ -1,56 +1,80 @@
-# TagHelper
-[![Forge](http://cf.way2muchnoise.eu/560743.svg)](https://www.curseforge.com/minecraft/mc-mods/taghelper)
-[![Minecraft](http://cf.way2muchnoise.eu/versions/For%20MC_560743_all.svg)](https://minecraft.fandom.com/wiki)
-[![LICENSE](https://img.shields.io/github/license/Rustypredator/TagHelper)](https://github.com/Rustypredator/TagHelper/blob/main/LICENSE)
-[![Gradle CI](https://github.com/Rustypredator/TagHelper/actions/workflows/Gradle%20CI.yml/badge.svg)](https://github.com/Rustypredator/TagHelper/actions/workflows/Gradle%20CI.yml)
+# Tag Helper Plus
 
-A Minecraft mod for editing **Named Binary Tags** (NBT) by commands.
+A Minecraft mod for reading and editing item data from commands.
 
-> This is a Fork of the [original Mod](https://github.com/Samarium150/TagHelper) by [Samarium_150](https://www.curseforge.com/members/samarium_150).  
-> Their mod seems abandoned on Mc 1.18.2.  
-> Since i needed the functionality on a newer version of Minecraft, i decided to update it and while at it i am also adding some new functionality.
+Fork of [Samarium150/TagHelper](https://github.com/Samarium150/TagHelper), extended
+with slot, hotbar, inventory and ender chest targeting, and with a build that
+produces every supported Minecraft version from one source tree.
 
-## Usage
+## Supported versions
 
-- `/taghelper <selector> get`  
-  Get NBT of the item.
-- `/taghelper <selector> set <key> <value>`  
-  Add or Replace`{key: value}` in NBT of the item.
-- `/taghelper <selector> set <NBT>`  
-  Set NBT of the item as `<NBT>`
-- `/taghelper <selector> remove <key>`  
-  Remove `{key: value}` in NBT of the item.
-- `/taghelper <selector> remove`  
-  Remove all NBT of the item.
+| Minecraft | Loader | Jar |
+| --- | --- | --- |
+| 1.19.4 | Forge | `taghelper-1.19.4-forge-<version>.jar` |
+| 1.20.1 | Forge | `taghelper-1.20.1-forge-<version>.jar` |
+| 1.21.1 | NeoForge | `taghelper-1.21.1-neoforge-<version>.jar` |
 
-`/th` is an alias of `/taghelper`
+## Commands
 
-__Explanation of `<selector>`__:  
-The Selector can be one of a few different key words.  
-The List below describes how each key word selects items:
-- `holding`
-  - This Selector targets the item in your main hand.
-- `slot <nr>`
-  - This Selector targets a specific slot that has to be provided.  
-  For Example, `0` Represents the first slot from the left of your hotbar.
-- `inventory`
-  - This Selector targets your whole inventory (Excluding the hotbar).  
-    Meaning it applies the tags you want to set or remove to every single item in your inventory.  
-    __Warning__: This is a powerful tool and can seriously mess up your items! use with care!
-- `echest`
-  - This Selector allows you to target every single item in your Ender Chest inventory.  
-  It works the same way as the `inventory` selector.
+`/taghelper` — aliased to `/th`. Requires permission level 2.
 
+    /th <scope> get
+    /th <scope> set <key> <value>
+    /th <scope> set <data>
+    /th <scope> remove <key>
+    /th <scope> remove
 
-## Todo:
-- [ ] Update to modern MC Variants
-  - [ ] 1.19.x
-  - [ ] 1.20.x
-  - [ ] 1.21.x
-- [x] Add More Capabilities
-  - [x] Item/Slot Selection
-    - [x] `Holding`
-    - [x] `Slot <slotnumber>`
-    - [x] `Hotbar`
-    - [x] `Inv`
-    - [x] `Echest`
+Scopes:
+
+| Scope | Items affected |
+| --- | --- |
+| `holding` | The stack in your main hand. |
+| `slot <0-40>` | One slot: 0-8 hotbar, 9-35 inventory, 36-39 armor, 40 offhand. |
+| `hotbar` | Every non-empty stack in slots 0-8. |
+| `inventory` | Every non-empty stack in slots 9-35. |
+| `echest` | Every non-empty stack in your ender chest. |
+
+Each of `get`, `set` and `remove`, and each of the bulk scopes, can be switched
+off in the config.
+
+### On 1.20.1 and earlier
+
+`<key>` is an item NBT key and `<value>` is any NBT tag.
+
+    /th holding set "myKey" 1
+    /th holding get
+    NBT: {myKey:1}
+
+### On 1.21.1
+
+1.20.5 replaced item NBT with data components, so `<key>` is a data component id
+and `<value>` is that component's NBT form — the same syntax `/give` takes. The
+key argument tab-completes from the component registry, and an unqualified key
+means `minecraft:`.
+
+    /th holding set custom_data {myKey:1}
+    /th holding set damage 10
+
+`get` dumps the stack's full effective component map, including the components
+the item type supplies by default:
+
+    /th holding get
+    components: {"minecraft:custom_data":{myKey:1},"minecraft:damage":10,...}
+
+`remove <key>` deletes a component outright; `remove` with no key resets the
+stack to the item type's defaults, which is the component-era equivalent of
+clearing an item's NBT.
+
+## Building
+
+    ./gradlew collectJars
+
+puts every jar in `build/dist/`. See [docs/BUILDING.md](docs/BUILDING.md) for the
+rest, and [docs/PORTING.md](docs/PORTING.md) for how one source tree produces all
+of them and what to do when Minecraft moves an API.
+
+Adding a Minecraft version is one line in `gradle/targets.gradle`.
+
+## License
+
+GNU General Public License v3.

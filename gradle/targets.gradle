@@ -1,0 +1,63 @@
+// ---------------------------------------------------------------------------
+// THE BUILD MATRIX
+//
+// One entry per shippable jar. Adding a Minecraft version means adding one
+// line here -- nothing else. See docs/BUILDING.md for what each field means
+// and for the pack_format lookup table.
+//
+//   minecraft     Minecraft version. Also the Gradle project name suffix.
+//   loader        'forge' or 'neoforge'. Selects loader/<loader>/ as a source layer.
+//   loaderVersion Loader version WITHOUT the Minecraft prefix.
+//   java          Java toolchain release. 17 for <=1.20.4, 21 for >=1.20.5.
+//   packFormat    Resource pack format for this Minecraft version.
+//
+// Optional overrides:
+//   itemData      'nbt' or 'components'. Defaults to 'nbt' below 1.20.5 and
+//                 'components' from 1.20.5 up -- that is when Mojang replaced
+//                 item NBT with data components. Only set this by hand if you
+//                 are doing something unusual.
+//   mcRange       Minecraft dependency range in the mod metadata. Default "[<mc>]".
+//   loaderRange   Loader dependency range in the mod metadata. Derived per loader.
+// ---------------------------------------------------------------------------
+
+gradle.ext.modTargets = [
+    [minecraft: '1.19.4', loader: 'forge',    loaderVersion: '45.4.5',   java: 17, packFormat: 13],
+    [minecraft: '1.20.1', loader: 'forge',    loaderVersion: '47.4.23',  java: 17, packFormat: 15],
+    [minecraft: '1.21.1', loader: 'neoforge', loaderVersion: '21.1.249', java: 21, packFormat: 34],
+]
+
+// --- derived fields; you should not need to edit below this line -----------
+
+/** Compares dotted version strings numerically: cmp('1.20.5', '1.21') < 0. */
+gradle.ext.compareMcVersions = { String a, String b ->
+    def pa = a.tokenize('.').collect { it.toInteger() }
+    def pb = b.tokenize('.').collect { it.toInteger() }
+    for (int i = 0; i < Math.max(pa.size(), pb.size()); i++) {
+        int x = i < pa.size() ? pa[i] : 0
+        int y = i < pb.size() ? pb[i] : 0
+        if (x != y) return x <=> y
+    }
+    return 0
+}
+
+gradle.ext.modTargets.each { t ->
+    t.name = "${t.minecraft}-${t.loader}"
+
+    // Item NBT became data components in 1.20.5.
+    if (!t.itemData) {
+        t.itemData = gradle.ext.compareMcVersions(t.minecraft, '1.20.5') >= 0 ? 'components' : 'nbt'
+    }
+
+    if (!t.mcRange) t.mcRange = "[${t.minecraft}]"
+
+    if (!t.loaderRange) {
+        def parts = t.loaderVersion.tokenize('.')
+        // Forge bumps its major per Minecraft version; NeoForge encodes the
+        // Minecraft version in major.minor, so pin one more component for it.
+        t.loaderRange = t.loader == 'neoforge' ? "[${parts[0]}.${parts[1]},)" : "[${parts[0]},)"
+    }
+
+    // Source layers, applied in order. A target may override this list to swap
+    // a layer out for a bespoke one under versions/<name>/.
+    t.layers = ["common", "platform/${t.itemData}", "loader/${t.loader}"]
+}
