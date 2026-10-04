@@ -10,9 +10,8 @@ produces every supported Minecraft version from one source tree.
 
 | Minecraft | Loader | Jar |
 | --- | --- | --- |
-| 1.19.4 | Forge | `taghelper-1.19.4-forge-<version>.jar` |
-| 1.20.1 | Forge | `taghelper-1.20.1-forge-<version>.jar` |
-| 1.21.1 | NeoForge | `taghelper-1.21.1-neoforge-<version>.jar` |
+| 1.20.1 | Forge | `taghelper-<version>+1.20.1-forge.jar` |
+| 1.21.1 | NeoForge | `taghelper-<version>+1.21.1-neoforge.jar` |
 
 ## Commands
 
@@ -69,11 +68,12 @@ clearing an item's NBT.
 
     ./gradlew collectJars
 
-puts every jar in `build/dist/`. See [docs/BUILDING.md](docs/BUILDING.md) for the
+puts every jar in `build/libs/`. See [docs/BUILDING.md](docs/BUILDING.md) for the
 rest, and [docs/PORTING.md](docs/PORTING.md) for how one source tree produces all
 of them and what to do when Minecraft moves an API.
 
-Adding a Minecraft version is one line in `gradle/targets.gradle`.
+Adding a Minecraft version is one `match(...)` line in `settings.gradle.kts` plus a
+`versions/<node>/gradle.properties`.
 
 ## License
 

@@ -1,67 +1,70 @@
 # Building
 
+The build is the same framework as the other FRS-Projects mods:
+[Stonecutter](https://stonecutter.kikugie.dev/) with Architectury Loom, one source tree, and one
+node per Minecraft version and loader.
+
 ## Requirements
 
-* JDK 21 to run Gradle. Individual targets compile against their own Java
-  release (17 or 21); Gradle provisions those toolchains itself.
+* A **JDK 25** where Gradle can find it: Gradle 9.7 runs its daemon on Java 25
+  (`gradle/gradle-daemon-jvm.properties`). Each node still compiles to its own Java level
+  (17 for 1.20.1, 21 for 1.21.1); Gradle downloads those toolchains itself.
 * Nothing else. The Gradle wrapper pins the Gradle version.
 
 ## Commands
 
 | Command | What it does |
 | --- | --- |
-| `./gradlew buildAll` | Builds every target in the matrix. |
-| `./gradlew collectJars` | Builds everything and gathers the shippable jars into `build/dist/`. |
-| `./gradlew :1.21.1-neoforge:build` | Builds one target. |
-| `./gradlew :1.20.1-forge:runClient` | Launches a dev client for one target. |
-| `./gradlew printTargets` | Prints the matrix as JSON. CI uses this for its job matrix. |
+| `./gradlew buildAll` | Builds every node |
+| `./gradlew checkAll` | Runs every node's checks, including `verifyModMetadata` |
+| `./gradlew collectJars` | Copies every node's jar into `build/libs` |
+| `./gradlew :1.20.1-forge:build` | Builds one node; its jar lands in `versions/1.20.1-forge/build/libs/` |
+| `./gradlew :1.20.1-forge:runClient` | Launches a dev client for one node |
+| `./gradlew "Set active project to 1.20.1-forge"` | Switches the working tree to another node |
 
-Set `CI=true` to skip Minecraft decompilation. Builds get much faster at the
-cost of not being able to step into Minecraft sources in a debugger.
+`verifyModMetadata` opens each built jar and fails the build if its loader metadata or
+`pack.mcmeta` is missing, so a jar that would load as an empty mod never ships. Pushing a `v*`
+tag that matches `mod.version` publishes a GitHub Release with every node's jar.
 
 ## Jar names
 
-Each target produces one jar named `taghelper-<minecraft>-<loader>-<mod>.jar`:
+Each node produces `taghelper-<mod version>+<node>.jar`:
 
 ```
-build/dist/
-  taghelper-1.19.4-forge-1.1.0.jar
-  taghelper-1.20.1-forge-1.1.0.jar
-  taghelper-1.21.1-neoforge-1.1.0.jar
+build/libs/
+  taghelper-1.2.0+1.20.1-forge.jar
+  taghelper-1.2.0+1.21.1-neoforge.jar
 ```
 
-The mod version is `mod_version` in `gradle.properties` and is shared by every
-target; bumping it once re-versions the whole matrix. Each jar's manifest also
-carries `MC-Version` and `Mod-Loader` attributes.
+The mod version is `mod.version` in `gradle.properties` and is shared by every node; bumping it
+once re-versions the whole matrix.
 
-For legacy Forge targets, `build/libs/` holds the reobfuscated production jar
-and `build/devlibs/` holds the un-reobfuscated one. `collectJars` only takes
-from `build/libs/`, so it always gathers the shippable artifact.
+## Layout
+
+```
+src/main/java/.../command/   the command tree, scopes and feedback; every node.
+src/main/java/.../platform/  ItemData, branched on `//? if >=1.20.5` (NBT vs data components).
+src/main/java/.../config/    TagHelperConfig, the switches the commands read.
+src/main/java/.../forge/     Forge entry point and config spec (`//? if forge`).
+src/main/java/.../neoforge/  The same, NeoForge spelling (`//? if neoforge`).
+src/main/resources/          mods.toml / neoforge.mods.toml / pack.mcmeta, templated from
+                             gradle.properties and versions/<node>/gradle.properties.
+build-logic/                 Convention plugin shared by every node (metadata, checks).
+versions/<node>/             That node's dependency versions.
+```
+
+Git holds the tree as the `1.21.1-neoforge` node, so the Forge file and the NBT branch of
+`ItemData` are committed commented out.
 
 ## Adding a Minecraft version
 
-Add one line to `gradle/targets.gradle`:
+1. Add a `match("<minecraft>", "<loader>")` line in `settings.gradle.kts`.
+2. Add `versions/<minecraft>-<loader>/gradle.properties` (copy the nearest one and adjust
+   `deps.*`, `java.version` and `deps.pack_format`).
+3. Add the node to the matrix in `.github/workflows/build.yml`.
 
-```groovy
-[minecraft: '1.21.4', loader: 'neoforge', loaderVersion: '21.4.154', java: 21, packFormat: 46],
-```
-
-That is the whole change if the Minecraft APIs the mod touches did not move. If
-they did, see [PORTING.md](PORTING.md).
-
-Fields:
-
-| Field | Meaning |
-| --- | --- |
-| `minecraft` | Minecraft version. Also becomes the Gradle project name and part of the jar name. |
-| `loader` | `forge` or `neoforge`. Selects `loader/<loader>/` as a source layer. |
-| `loaderVersion` | Loader version **without** the Minecraft prefix. |
-| `java` | Java release. 17 up to 1.20.4, 21 from 1.20.5. |
-| `packFormat` | Resource pack format, see the table below. |
-
-Optional overrides: `itemData` (`nbt` or `components`, derived from the
-Minecraft version), `mcRange` and `loaderRange` (dependency ranges in the mod
-metadata), and `layers` (the source layer list).
+That is the whole change if the Minecraft APIs the mod touches did not move. If they did, see
+[PORTING.md](PORTING.md).
 
 ### pack_format
 
@@ -74,12 +77,9 @@ metadata), and `layers` (the source layer list).
 | 1.21.1 | 34 |
 | 1.21.4 | 46 |
 
-### Loader toolchains
+### 1.19.4
 
-Forge targets build with ModDevGradle's legacy plugin, which supports
-MinecraftForge **1.17 through 1.20.1 only**. NeoForge targets build with the
-regular ModDevGradle plugin, which supports NeoForge 21.0 and later.
-
-There is therefore no toolchain wired up for MinecraftForge on 1.20.2+. Adding
-such a target needs ForgeGradle 6 alongside ModDevGradle, which the matrix does
-not currently model.
+1.19.4-forge was a target under the previous ModDevGradle build. Architectury Loom 1.17 leaves
+part of Forge 1.19.4's Minecraft jar unmapped (`net.minecraft.network.chat.Component` and ~230
+other classes are missing), so the node was dropped. The NBT branch of `ItemData` covers it;
+re-adding it is the procedure above once Loom maps it correctly.
