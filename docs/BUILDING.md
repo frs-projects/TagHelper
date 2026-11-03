@@ -1,5 +1,9 @@
 # Building
 
+The build logic is the `framework/` submodule
+([frs-projects/mod-framework](https://github.com/frs-projects/mod-framework)), shared with the other
+FRS-Projects mods. Clone with `--recurse-submodules`, or run `git submodule update --init` after cloning.
+
 The build is the same framework as the other FRS-Projects mods:
 [Stonecutter](https://stonecutter.kikugie.dev/) with Architectury Loom, one source tree, and one
 node per Minecraft version and loader.
@@ -49,7 +53,8 @@ src/main/java/.../forge/     Forge entry point and config spec (`//? if forge`).
 src/main/java/.../neoforge/  The same, NeoForge spelling (`//? if neoforge`).
 src/main/resources/          mods.toml / neoforge.mods.toml / pack.mcmeta, templated from
                              gradle.properties and versions/<node>/gradle.properties.
-build-logic/                 Convention plugin shared by every node (metadata, checks).
+framework/                   The frs-projects/mod-framework submodule: the convention plugins
+                             every node is built with (metadata, checks). See its README.
 versions/<node>/             That node's dependency versions.
 ```
 

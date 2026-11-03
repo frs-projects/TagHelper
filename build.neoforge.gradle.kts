@@ -1,27 +1,9 @@
 plugins {
-    id("dev.architectury.loom")
-    id("taghelper-platform")
-}
-
-loom {
-    silentMojangMappingsLicense()
+    id("frs.neoforge")
 }
 
 dependencies {
-    minecraft("com.mojang:minecraft:${property("deps.minecraft")}")
-    // Minecraft ships unobfuscated from the 26.x line on, so Mojang no longer
-    // publishes mapping files and there is nothing to remap against.
-    if (property("deps.mappings") == "unobfuscated") {
-        mappings(loom.layered { })
-    } else {
-        mappings(loom.officialMojangMappings())
-    }
-    "neoForge"("net.neoforged:neoforge:${property("deps.neoforge")}")
-}
-
-loom {
-    runs {
-        named("client") { runDir("run/client") }
-        named("server") { runDir("run/server") }
-    }
+    // javax.annotation.Nonnull/Nullable, which the command code uses throughout. Forge and
+    // NeoForge both ship it at runtime, but not on every node's compile classpath.
+    "compileOnly"("com.google.code.findbugs:jsr305:3.0.2")
 }
