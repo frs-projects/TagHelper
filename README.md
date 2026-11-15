@@ -1,5 +1,11 @@
 # Tag Helper Plus
 
+| Side | Status | Notes |
+| --- | --- | --- |
+| **Server** | Required | The commands run here. |
+| **Client** | Not needed | Vanilla clients can join. |
+| **Singleplayer** | Supported |  |
+
 A Minecraft mod for reading and editing item data from commands.
 
 Fork of [Samarium150/TagHelper](https://github.com/Samarium150/TagHelper), extended
